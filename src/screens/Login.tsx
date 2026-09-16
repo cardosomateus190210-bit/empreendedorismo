@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getAuthErrorMessage, loginUser } from "../lib/firebase";
 
 interface LoginProps {
   onLogin: () => void;
@@ -9,6 +10,22 @@ export default function Login({ onLogin, onSignup }: LoginProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleLogin = async () => {
+    setError("");
+    setIsLoading(true);
+
+    try {
+      await loginUser(email.trim(), password);
+      onLogin();
+    } catch (loginError) {
+      setError(getAuthErrorMessage(loginError));
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div
@@ -150,8 +167,14 @@ export default function Login({ onLogin, onSignup }: LoginProps) {
           </button>
         </div>
 
-        <button className="btn-primary" onClick={onLogin} style={{ marginTop: 6 }}>
-          Entrar
+        {error && (
+          <p style={{ color: "#f87171", fontFamily: "Inter", fontSize: 13 }} role="alert">
+            {error}
+          </p>
+        )}
+
+        <button className="btn-primary" onClick={handleLogin} disabled={isLoading} style={{ marginTop: 6 }}>
+          {isLoading ? "Entrando..." : "Entrar"}
         </button>
 
         {/* Divider */}

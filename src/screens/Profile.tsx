@@ -25,7 +25,11 @@ const SECTIONS = [
   },
 ];
 
-export default function Profile() {
+interface ProfileProps {
+  onLogout: () => void;
+}
+
+export default function Profile({ onLogout }: ProfileProps) {
   return (
     <div className="screen" style={{ background: "var(--background)", paddingBottom: 96 }}>
       {/* Header background */}
@@ -193,6 +197,11 @@ export default function Profile() {
 
         {/* Logout */}
         <button
+          onClick={async () => {
+            const { logoutUser } = await import("../lib/firebase");
+            await logoutUser();
+            onLogout();
+          }}
           style={{
             width: "100%",
             background: "rgba(239,68,68,0.06)",

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import NavBar, { type Screen } from "./components/NavBar";
 import Splash from "./screens/Splash";
 import Login from "./screens/Login";
@@ -9,6 +9,7 @@ import MapScreen from "./screens/MapScreen";
 import Alerts from "./screens/Alerts";
 import Impact from "./screens/Impact";
 import Profile from "./screens/Profile";
+import { isFirebaseConfigured, subscribeToAuth } from "./lib/firebase";
 
 type AppScreen =
   | "splash"
@@ -37,6 +38,14 @@ const FRAME_OPTIONS: { id: AppScreen; label: string }[] = [
 
 export default function App() {
   const [screen, setScreen] = useState<AppScreen>("splash");
+
+  useEffect(() => {
+    if (!isFirebaseConfigured) return;
+
+    return subscribeToAuth((user) => {
+      if (user) setScreen("home");
+    });
+  }, []);
 
   const isMainScreen = MAIN_SCREENS.includes(screen as Screen);
 
@@ -69,7 +78,7 @@ export default function App() {
       case "impact":
         return <Impact />;
       case "profile":
-        return <Profile />;
+        return <Profile onLogout={() => setScreen("login")} />;
     }
   };
 

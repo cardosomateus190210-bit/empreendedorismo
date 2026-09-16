@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getAuthErrorMessage, registerUser } from "../lib/firebase";
 
 interface SignupProps {
   onDone: () => void;
@@ -7,6 +8,39 @@ interface SignupProps {
 
 export default function Signup({ onDone, onBack }: SignupProps) {
   const [agreed, setAgreed] = useState(false);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [passwordConfirmation, setPasswordConfirmation] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSignup = async () => {
+    setError("");
+
+    if (!name.trim() || !email.trim() || !password || !passwordConfirmation) {
+      setError("Preencha todos os campos.");
+      return;
+    }
+    if (password !== passwordConfirmation) {
+      setError("As senhas não são iguais.");
+      return;
+    }
+    if (!agreed) {
+      setError("Aceite os termos para criar sua conta.");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await registerUser(name.trim(), email.trim(), password);
+      onDone();
+    } catch (signupError) {
+      setError(getAuthErrorMessage(signupError));
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="screen" style={{ background: "var(--background)", padding: "0 28px 48px" }}>
@@ -85,10 +119,10 @@ export default function Signup({ onDone, onBack }: SignupProps) {
       {/* Form */}
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         {[
-          { label: "Nome completo", placeholder: "Mateus Silva", type: "text" },
-          { label: "E-mail", placeholder: "mateus@email.com", type: "email" },
-          { label: "Senha", placeholder: "••••••••", type: "password" },
-          { label: "Confirmar senha", placeholder: "••••••••", type: "password" },
+          { label: "Nome completo", placeholder: "Mateus Silva", type: "text", value: name, setValue: setName },
+          { label: "E-mail", placeholder: "mateus@email.com", type: "email", value: email, setValue: setEmail },
+          { label: "Senha", placeholder: "••••••••", type: "password", value: password, setValue: setPassword },
+          { label: "Confirmar senha", placeholder: "••••••••", type: "password", value: passwordConfirmation, setValue: setPasswordConfirmation },
         ].map((field) => (
           <div key={field.label}>
             <label
@@ -103,7 +137,13 @@ export default function Signup({ onDone, onBack }: SignupProps) {
             >
               {field.label}
             </label>
-            <input className="input-field" type={field.type} placeholder={field.placeholder} />
+            <input
+              className="input-field"
+              type={field.type}
+              placeholder={field.placeholder}
+              value={field.value}
+              onChange={(event) => field.setValue(event.target.value)}
+            />
           </div>
         ))}
 
@@ -146,8 +186,14 @@ export default function Signup({ onDone, onBack }: SignupProps) {
           </span>
         </label>
 
-        <button className="btn-primary" onClick={onDone} style={{ marginTop: 8 }}>
-          Criar conta
+        {error && (
+          <p style={{ color: "#f87171", fontFamily: "Inter", fontSize: 13 }} role="alert">
+            {error}
+          </p>
+        )}
+
+        <button className="btn-primary" onClick={handleSignup} disabled={isLoading} style={{ marginTop: 8 }}>
+          {isLoading ? "Criando..." : "Criar conta"}
         </button>
 
         <div style={{ textAlign: "center" }}>
